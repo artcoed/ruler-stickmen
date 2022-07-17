@@ -21,6 +21,7 @@ public class FighterWeapon : MonoBehaviour
     private void Awake()
     {
         _fighter.Targeted += OnTargeted;
+        _fighter.Untargeted += OnUntargeted;
         _movement.Reached += Attack;
         _fighter.Hidding += OnHidding;
     }
@@ -28,6 +29,7 @@ public class FighterWeapon : MonoBehaviour
     private void OnDestroy()
     {
         _fighter.Targeted -= OnTargeted;
+        _fighter.Untargeted -= OnUntargeted;
         _movement.Reached -= Attack;
         _fighter.Hidding -= OnHidding;
     }
@@ -44,7 +46,7 @@ public class FighterWeapon : MonoBehaviour
     {
         if (_isHidding)
             return;
-
+        
         _attacking = StartCoroutine(Attacking());
     }
 
@@ -54,6 +56,14 @@ public class FighterWeapon : MonoBehaviour
 
         if (_target == null)
             throw new ArgumentException(nameof(target));
+    }
+
+    private void OnUntargeted()
+    {
+        if (_attacking != null)
+            StopCoroutine(_attacking);
+
+        _target = null;
     }
 
     private void OnHidding()
@@ -71,13 +81,16 @@ public class FighterWeapon : MonoBehaviour
 
     private IEnumerator Attacking()
     {
-        _target.TakeDamage(_damage);
-        var particle = Instantiate(_attackParticle, _attackParticlePoint.position, Quaternion.identity);
-        Destroy(particle, _attackParticleSeconds);
+        if (_target != null && _target.IsAlive)
+        {
+            _target.TakeDamage(_damage);
+            var particle = Instantiate(_attackParticle, _attackParticlePoint.position, Quaternion.identity);
+            Destroy(particle, _attackParticleSeconds);
+        }
+        
         yield return new WaitForSeconds(_animator.AnimationSeconds);
-        _animator.Stay();
 
-        if (_target.IsAlive)
+        if (_target != null && _target.IsAlive)
             Attack();
     }
 }

@@ -20,6 +20,9 @@ public class FighterHealth : MonoBehaviour
         if (damage < 0)
             throw new ArgumentOutOfRangeException(nameof(damage));
 
+        if (IsAlive == false)
+            throw new InvalidOperationException(nameof(TakeDamage));
+
         _value -= damage;
 
         if (_value <= 0)
@@ -36,6 +39,9 @@ public class FighterHealth : MonoBehaviour
     {
         if (amount < 0)
             throw new ArgumentOutOfRangeException(nameof(amount));
+
+        if (IsAlive == false)
+            throw new InvalidOperationException(nameof(Add));
 
         _value += amount;
         Changed?.Invoke();

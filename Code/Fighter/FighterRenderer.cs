@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class FighterRenderer : MonoBehaviour
 {
+    [SerializeField] private Fighter _fighter = null;
     [SerializeField] private FighterHealth _health = null;
     [SerializeField] private Material _startMaterial = null;
     [SerializeField] private Renderer _renderer = null;
@@ -20,15 +21,20 @@ public class FighterRenderer : MonoBehaviour
     {
         _defaultColor = _startMaterial.color;
         _material = new Material(_startMaterial);
-        _material.color = _defaultColor;
-        _renderer.material = _material;
 
+        _fighter.Playing += OnPlaying;
         _health.Damaged += OnDamaged;
     }
 
     private void OnDestroy()
     {
+        _fighter.Playing -= OnPlaying;
         _health.Damaged -= OnDamaged;
+    }
+
+    private void OnPlaying()
+    {
+        _renderer.material = _material;
     }
 
     private void OnDamaged()

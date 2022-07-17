@@ -16,6 +16,9 @@ public class CardMovement : MonoBehaviour
     [SerializeField] private float _selectHeight = 400f;
     [SerializeField] private float _selectSpeed = 10f;
 
+    [SerializeField] private Quaternion _clearRotation = Quaternion.identity;
+    [SerializeField] private float _clearRotationSpeed = 0.2f;
+
     private Arc _arc;
     private ArcPosition _position;
     private ArcPosition _relaxPosition;
@@ -23,6 +26,7 @@ public class CardMovement : MonoBehaviour
     private bool _isShowing;
 
     private Coroutine _relaxing;
+    private Coroutine _raising;
 
     public void Init(Arc arc)
     {
@@ -58,11 +62,17 @@ public class CardMovement : MonoBehaviour
 
     private void OnSelecting()
     {
-        StartCoroutine(Raise(_selectHeight, _selectSpeed));
+        if (_relaxing != null)
+            StopCoroutine(_relaxing);
+
+        _raising = StartCoroutine(Raising(_selectHeight, _selectSpeed));
     }
 
     private void Relax()
     {
+        if (_raising != null)
+            return;
+
         if (_relaxing != null)
             StopCoroutine(_relaxing);
 
@@ -102,12 +112,12 @@ public class CardMovement : MonoBehaviour
         }
     }
 
-    private IEnumerator Raise(float height, float speed)
+    private IEnumerator Raising(float height, float speed)
     {
-        _rectTransform.localRotation = Quaternion.identity;
+        var clearingRotation = StartCoroutine(ClearingRotation());
 
         var startPosition = _rectTransform.anchoredPosition;
-        var desiredPosition = new Vector2(_rectTransform.anchoredPosition.x, _rectTransform.anchoredPosition.y + height);
+        var desiredPosition = new Vector2(_rectTransform.anchoredPosition.x, height);
         var desiredOffset = desiredPosition - startPosition;
         var seconds = height / speed;
 
@@ -120,6 +130,19 @@ public class CardMovement : MonoBehaviour
             progress = Mathf.Min(elapsedSeconds / seconds, 1);
             var currentOffset = progress * desiredOffset;
             _rectTransform.anchoredPosition = startPosition + currentOffset;
+            yield return null;
+        }
+
+        yield return clearingRotation;
+    }
+
+    private IEnumerator ClearingRotation()
+    {
+        var targetRotation = Quaternion.identity;
+
+        while (_rectTransform.localRotation != _clearRotation)
+        {
+            _rectTransform.localRotation = Quaternion.RotateTowards(_rectTransform.localRotation, targetRotation, _clearRotationSpeed * Time.deltaTime);
             yield return null;
         }
     }

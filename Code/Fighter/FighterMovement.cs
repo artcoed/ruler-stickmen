@@ -1,64 +1,76 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class FighterMovement : MonoBehaviour
 {
     [SerializeField] private Fighter _fighter = null;
     [SerializeField] private FighterAnimator _animator = null;
-
-    [SerializeField] private float _moveSpeed = 2f;
-    [SerializeField] private float _rotateSpeed = 2f;
+    [SerializeField] private NavMeshAgent _navMeshAgent = null;
 
     [SerializeField] private float _stopDistance = 2f;
+
+    private Coroutine _targeting;
 
     public event Action Reached;
 
     private void Awake()
     {
         _fighter.Targeted += OnTargeted;
+        _fighter.Hidding += StopTargeting;
+        _fighter.Winned += OnWinned;
     }
 
     private void OnDestroy()
     {
         _fighter.Targeted -= OnTargeted;
+        _fighter.Hidding -= StopTargeting;
+        _fighter.Winned -= OnWinned;
     }
 
     private void OnTargeted(Fighter target)
     {
-        StartCoroutine(Targeting(target));
+        StopTargeting();
+        _targeting = StartCoroutine(Targeting(target, _stopDistance));
     }
 
-    private IEnumerator Targeting(Fighter target)
+    private void OnWinned()
     {
-        var rotating = StartCoroutine(Rotating(target));
-        yield return StartCoroutine(Moving(target, _stopDistance));
-        yield return rotating;
-        Reached?.Invoke();
-    }
-
-    private IEnumerator Moving(Fighter target, float stopDistance = 0)
-    {
-        _animator.Run();
-
-        while (Vector3.Distance(target.transform.position, transform.position) > stopDistance)
-        {
-            transform.position = Vector3.MoveTowards(transform.position, target.transform.position, _moveSpeed * Time.deltaTime);
-            yield return null;
-        }
-
+        StopTargeting();
         _animator.Stay();
     }
 
-    private IEnumerator Rotating(Fighter target)
+    private void StopTargeting()
     {
-        var direction = (target.transform.position - transform.position).normalized;
-        var targetRotation = Quaternion.LookRotation(direction);
+        if (_targeting != null)
+            StopCoroutine(_targeting);
+    }
 
-        while (transform.rotation != targetRotation)
+    private IEnumerator Targeting(Fighter target, float stopDistance = 0)
+    {
+        _animator.Run();
+        _navMeshAgent.SetDestination(target.transform.position);
+
+        while (true)
         {
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, _rotateSpeed * Time.deltaTime);
+            while (_navMeshAgent.pathPending)
+            {
+                yield return null;
+            }
+
+            if (_navMeshAgent.remainingDistance <= stopDistance)
+            {
+                break;
+            }
+
+            _navMeshAgent.SetDestination(target.transform.position);
             yield return null;
         }
+
+        _navMeshAgent.ResetPath();
+        _animator.Stay();
+        Reached?.Invoke();
+        yield return null;
     }
 }

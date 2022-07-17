@@ -5,7 +5,10 @@ public class Card : MonoBehaviour
 {
     [SerializeField] private CardPointerInput _input = null;
 
+    [SerializeField] private CardType _type = CardType.Sword;
+
     private Hand _hand;
+    private SelectorArea _selectorArea;
 
     private bool _isShowing;
     private bool _isRelaxing;
@@ -18,9 +21,12 @@ public class Card : MonoBehaviour
 
     public event Action Using;
 
-    public void Init(Hand hand)
+    public CardType Type => _type;
+
+    public void Init(Hand hand, SelectorArea selectorArea)
     {
         _hand = hand;
+        _selectorArea = selectorArea;
 
         gameObject.SetActive(false);
 
@@ -69,6 +75,8 @@ public class Card : MonoBehaviour
 
         _isSelecting = true;
 
+        _selectorArea.Show(this);
+
         Selecting?.Invoke();
     }
 
@@ -82,6 +90,8 @@ public class Card : MonoBehaviour
 
         _isUsing = true;
 
+        _selectorArea.Use(this);
+
         Using?.Invoke();
     }
 
@@ -93,7 +103,7 @@ public class Card : MonoBehaviour
 
     private void OnPressed()
     {
-        if (_isSelecting == false && _isRelaxing)
+        if (_isSelecting == false && _isRelaxing && _selectorArea.CanShow)
             Select();
     }
 

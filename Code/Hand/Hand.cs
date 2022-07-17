@@ -4,13 +4,17 @@ using UnityEngine;
 
 public class Hand : MonoBehaviour
 {
+    [SerializeField] private Game _game = null;
     [SerializeField] private CardPositions[] _cardPositions = new CardPositions[0];
     [SerializeField] private ArcPosition[] _showPositions = new ArcPosition[0];
+
+    [SerializeField] private int _amountDropCardToStartGame = 5;
 
     private Queue<Card> _takingCards;
     private List<Card> _showedCards;
 
     private Card _showingCard;
+    private int _amountDropCard;
 
     private void Awake()
     {
@@ -42,6 +46,10 @@ public class Hand : MonoBehaviour
     {
         _showedCards.Remove(card);
         MoveToPlaces();
+        _amountDropCard++;
+
+        if (_amountDropCard == _amountDropCardToStartGame)
+            _game.Play();
     }
 
     private void Show(Card card)
