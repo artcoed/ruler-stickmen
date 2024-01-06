@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class FighterProtection : MonoBehaviour
 {
+    // В этом месте ваще любой предмет можно сделать щитом :3 Для безопасности лучше вывести класс Shield 
+    // Или вообще создать иерархию через интерфейс IItem или абстрактный класс Item а потом унаследовать некоторые апгрейды
+    // В конечном итоге тебе это даст возможность к дальнейшм расширениям по предметам и абилкам
     [SerializeField] private GameObject _shieldPrefab = null;
     [SerializeField] private Transform _shieldPoint = null;
 
